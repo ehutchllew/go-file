@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io/fs"
@@ -60,7 +59,7 @@ func main() {
 func parseExcelFile(filePath string, ch *chan []string) {
 	defer wg.Done()
 
-	file, err := os.Open(filePath)
+	file, err := excelize.OpenFile(filePath)
 	if err != nil {
 		log.Fatalf("Cannot open file (%s)\n Err: %v", filePath, err)
 	}
@@ -70,23 +69,17 @@ func parseExcelFile(filePath string, ch *chan []string) {
 	devName := filePathSlice[len(filePathSlice)-1]
 	fmt.Println("DEVNAME:::", devName)
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		reader := csv.NewReader(strings.NewReader(line))
-
-		csvValues, err := reader.Read()
+	sheets := file.GetSheetList()
+	for _, sheet := range sheets {
+		rows, err := file.GetRows(sheet)
 		if err != nil {
-			fmt.Printf("Error reading CSV line (%v)\n Err: %v", line, err)
-			continue
+			log.Fatalf("Unable to get rows for sheet (%s)\n Err: %v", sheet, err)
 		}
 
-		// Depending on `csvValues` type, we might be able to prepend `devName` before writing to channel
-		fmt.Println("CSV Values:", csvValues)
-	}
+		for i, row := range rows {
+			fmt.Printf("***\nRow%d Values: %v\n***\n", i, row)
+		}
 
-	if err := scanner.Err(); err != nil {
-		fmt.Println("Scanner error:", err)
 	}
 }
 
