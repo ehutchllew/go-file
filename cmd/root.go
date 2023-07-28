@@ -58,16 +58,26 @@ func (c *ColumnIndex) GetFileHeaders() []string {
 
 func (c *ColumnIndex) SortWritableData(data *[]string) []string {
 	dataValues := *data
+
+	getSafeValuefunc := func(fieldP *int) string {
+		if fieldP != nil {
+			// fmt.Println("\n***********\n", c.FileName, *fieldP, len(dataValues), dataValues[*fieldP])
+			return dataValues[*fieldP]
+		}
+
+		return "N/A"
+	}
+
 	return []string{
-		dataValues[*c.SAT_ACCT],
-		dataValues[*c.BILL_STATUS],
-		dataValues[*c.HOST_BILL_FROM],
-		dataValues[*c.HOST_BILL_TO],
-		dataValues[*c.TRANSFERRED_KWH],
-		dataValues[*c.BANKED_PRIOR_MONTH],
-		dataValues[*c.ALLOCATION_PERCENT],
-		dataValues[*c.APPLIED],
-		dataValues[*c.BANKED_CARRY_OVER],
+		getSafeValuefunc(c.SAT_ACCT),
+		getSafeValuefunc(c.BILL_STATUS),
+		getSafeValuefunc(c.HOST_BILL_FROM),
+		getSafeValuefunc(c.HOST_BILL_TO),
+		getSafeValuefunc(c.TRANSFERRED_KWH),
+		getSafeValuefunc(c.BANKED_PRIOR_MONTH),
+		getSafeValuefunc(c.ALLOCATION_PERCENT),
+		getSafeValuefunc(c.APPLIED),
+		getSafeValuefunc(c.BANKED_CARRY_OVER),
 	}
 }
 
@@ -232,6 +242,7 @@ func parseExcelFile(filePath string, ch *chan []string) {
 		for i, row := range rows {
 			if i == 0 {
 				populateIndexMap(row, &fileColumnIndexMap)
+
 				validateFile(&fileColumnIndexMap)
 
 				if !containsAggFileHeader {
@@ -251,6 +262,7 @@ func parseExcelFile(filePath string, ch *chan []string) {
 
 func populateIndexMap(headers []string, fileColumnIndexMap *ColumnIndex) error {
 	for i, header := range headers {
+		i := i
 		lowerHeader := strings.ToLower(header)
 		switch lowerHeader {
 		case strings.ToLower(SAT_ACCT):
